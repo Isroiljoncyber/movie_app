@@ -14,6 +14,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   late final PageController _pageController = PageController(keepPage: true);
   int _page = 0;
+  bool isSearch = false;
 
   final List<Widget> _bottomNavPages = <Widget>[
     const NewPlayingPage(),
@@ -25,8 +26,23 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(isSearch ? 40 : 0),
+          child: Container(),
+        ),
         centerTitle: true,
-        title: const Text('Movies App'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(
+                () {
+                  isSearch = !isSearch;
+                },
+              );
+            },
+            icon: const Icon(Icons.search),
+          ),
+        ],
       ),
       body: PageView(
         controller: _pageController,
