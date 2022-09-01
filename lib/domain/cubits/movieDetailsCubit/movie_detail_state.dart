@@ -14,7 +14,9 @@ class MovieDetailInitialState extends MovieDetailState {
 
 class MovieDetailOnCompletedState extends MovieDetailState {
   const MovieDetailOnCompletedState(this.movieDetailsModel);
+
   final MovieDetailsModel movieDetailsModel;
+
   @override
   List<Object> get props => [movieDetailsModel];
 }

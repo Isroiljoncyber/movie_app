@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../screen/main_page.dart';
 import '../../../utils/constant.dart';
 import '../../model/movies_model.dart';
 
@@ -11,6 +12,8 @@ part 'popular_movies_state.dart';
 
 class PopularMoviesCubit extends Cubit<PopularMoviesState> {
   PopularMoviesCubit() : super(const PopularMoviesInitialState());
+
+  List<Results> movieList = [];
 
   Future getMoviesList() async {
     const String popularMovieUrl = "${baseUrl}popular${apiKeyWithAdd}1";
@@ -26,7 +29,7 @@ class PopularMoviesCubit extends Cubit<PopularMoviesState> {
         // Get the result list
         List results = data["results"];
         // Get the Movie list
-        List<Results> movieList = createMovieList(results);
+        movieList = createMovieList(results);
         // Print the results.
         emit(PopularMoviesOnCompletedState(movieList));
       } else {
@@ -34,6 +37,38 @@ class PopularMoviesCubit extends Cubit<PopularMoviesState> {
       }
     } catch (exception) {
       emit(PopularMoviesOnFailed(exception.toString()));
+    }
+  }
+
+  Future searchPopularMovies(String movieName) async {
+    try {
+      emit(const PopularMoviesOnProgress());
+      List<Results> sortedMovies = [];
+      for (var element in movieList) {
+        if (element.title!.toLowerCase().contains(movieName.toLowerCase())) {
+          sortedMovies.add(element);
+        }
+      }
+      emit(PopularMoviesOnCompletedState(sortedMovies));
+    } catch (e) {
+      emit(PopularMoviesOnFailed(e.toString()));
+    }
+  }
+
+  Future sortPopularMovies(SortType sortType) async {
+    try {
+      emit(const PopularMoviesOnProgress());
+      List<Results> sortedMovies = movieList;
+      if (sortType == SortType.popularity) {
+        sortedMovies.sort((a, b) => a.popularity!.compareTo(b.popularity!));
+      } else if (sortType == SortType.voteAverage) {
+        sortedMovies.sort((a, b) => a.voteAverage!.compareTo(b.voteAverage!));
+      } else if (sortType == SortType.voteCount) {
+        sortedMovies.sort((a, b) => a.voteCount!.compareTo(b.voteCount!));
+      }
+      emit(PopularMoviesOnCompletedState(sortedMovies.reversed.toList()));
+    } catch (e) {
+      emit(PopularMoviesOnFailed(e.toString()));
     }
   }
 }

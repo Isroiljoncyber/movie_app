@@ -18,6 +18,16 @@ class MovieCardItem extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w400),
           ),
         ),
+        // header: Center(
+        //   child: Text(
+        //     '${_resultsModel.popularity}\n${_resultsModel.voteAverage}\n${_resultsModel.voteCount}',
+        //     style: const TextStyle(
+        //       color: Colors.red,
+        //       fontSize: 18,
+        //       fontWeight: FontWeight.w600,
+        //     ),
+        //   ),
+        // ),
         child: GestureDetector(
           onTap: () {
             Navigator.pushNamed(context, Routes.movieDetailsPage,

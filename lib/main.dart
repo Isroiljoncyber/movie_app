@@ -27,16 +27,13 @@ class MyApp extends StatelessWidget {
         BlocProvider<MovieTrailersCubit>(create: (_) => MovieTrailersCubit()),
       ],
       child: MaterialApp(
-      theme: ThemeData(
-      primarySwatch: Colors.blue,
-    ),
-    debugShowCheckedModeBanner: false,
-    home: const MainPage(),
-    onGenerateRoute: (setting) => Routes.generateRoute(
-    setting
-    )
-    )
-    ,
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          themeMode: ThemeMode.dark,
+          debugShowCheckedModeBanner: false,
+          home: const MainPage(),
+          onGenerateRoute: (setting) => Routes.generateRoute(setting)),
     );
   }
 }

@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:movie_app/domain/cubits/popularMoviesCubit/popular_movies_cubit.dart';
+import 'package:movie_app/domain/cubits/upcomingMoviesCubit/upcoming_movies_cubit.dart';
 import 'package:movie_app/screen/popular_page.dart';
 import 'package:movie_app/screen/upcoming_page.dart';
 
+import '../domain/cubits/nowPlayingListCubit/now_playing_movies_cubit.dart';
 import 'now_playing_page.dart';
+
+enum SortType { popularity, voteCount, voteAverage }
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -11,56 +17,224 @@ class MainPage extends StatefulWidget {
   State<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   late final PageController _pageController = PageController(keepPage: true);
   int _page = 0;
   bool isSearch = false;
-
+  late TextEditingController searchController = TextEditingController();
   final List<Widget> _bottomNavPages = <Widget>[
     const NewPlayingPage(),
     const UpcomingPage(),
     const PopularPage()
   ];
 
+  late AnimationController animationController;
+  late Animation<double> heightAnima;
+  late Animation<double> fadedAnim;
+
+  @override
+  void initState() {
+    animationController =
+        AnimationController(vsync: this, duration: const Duration(seconds: 1));
+
+    final curve =
+        CurvedAnimation(parent: animationController, curve: Curves.ease);
+    heightAnima = Tween<double>(begin: 0, end: 56).animate(curve);
+    fadedAnim = Tween<double>(begin: 0, end: 1).animate(curve);
+
+    searchController.addListener(() {
+      if (_page == 0) {
+        context
+            .read<NowPlayingMoviesCubit>()
+            .searchNowPlayingMovies(searchController.text.toString());
+      } else if (_page == 1) {
+        context
+            .read<UpcomingMoviesCubit>()
+            .searchUpcomingMovies(searchController.text.toString());
+      } else {
+        context
+            .read<PopularMoviesCubit>()
+            .searchPopularMovies(searchController.text.toString());
+      }
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(isSearch ? 40 : 0),
-          child: Container(),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {
-              setState(
-                () {
-                  isSearch = !isSearch;
+    return AnimatedBuilder(
+      animation: heightAnima,
+      builder: (context, child) {
+        return Scaffold(
+          appBar: AppBar(
+            bottom: PreferredSize(
+                preferredSize: Size.fromHeight(heightAnima.value),
+                child: Visibility(
+                  visible: isSearch,
+                  child: FadeTransition(
+                    opacity: fadedAnim,
+                    child: Container(
+                      height: 56,
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: TextField(
+                              cursorColor: Colors.white,
+                              controller: searchController,
+                              style: const TextStyle(
+                                  fontSize: 16, color: Colors.white),
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                  gapPadding: 0,
+                                  borderSide: const BorderSide(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                hintText: "Search your movie",
+                                hintStyle: const TextStyle(
+                                    fontSize: 14, color: Colors.white),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                  gapPadding: 0,
+                                  borderSide: const BorderSide(
+                                      color: Colors.white, width: 2),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                  gapPadding: 0,
+                                  borderSide: const BorderSide(
+                                      color: Colors.white, width: 2),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Visibility(
+                            visible: isSearch,
+                            child: IconButton(
+                              onPressed: () {
+                                if (searchController.text.isNotEmpty) {
+                                  searchController.text = "";
+                                } else {
+                                  animationController.reverse();
+                                  Future.delayed(
+                                    const Duration(milliseconds: 150),
+                                    () => setState(
+                                      () {
+                                        isSearch = !isSearch;
+                                      },
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )),
+            centerTitle: true,
+            title: const Text("Movie App"),
+            actions: [
+              PopupMenuButton<SortType>(
+                onSelected: (SortType sortType) {
+                  if (_page == 0) {
+                    context
+                        .read<NowPlayingMoviesCubit>()
+                        .sortNowPlayingMovies(sortType);
+                  } else if (_page == 1) {
+                    context
+                        .read<UpcomingMoviesCubit>()
+                        .sortUpcomingMovies(sortType);
+                  } else {
+                    context
+                        .read<PopularMoviesCubit>()
+                        .sortPopularMovies(sortType);
+                  }
                 },
-              );
-            },
-            icon: const Icon(Icons.search),
+                itemBuilder: (BuildContext context) =>
+                    <PopupMenuEntry<SortType>>[
+                  const PopupMenuItem<SortType>(
+                    value: SortType.popularity,
+                    child: Text('By popularity'),
+                  ),
+                  const PopupMenuItem<SortType>(
+                    value: SortType.voteAverage,
+                    child: Text('By average vote'),
+                  ),
+                  const PopupMenuItem<SortType>(
+                    value: SortType.voteCount,
+                    child: Text('By vote count'),
+                  ),
+                ],
+                icon: const Icon(Icons.sort),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: IconButton(
+                  onPressed: () {
+                    if(isSearch){
+                      animationController.reverse();
+                      animationController.reverse();
+                      Future.delayed(
+                        const Duration(milliseconds: 150),
+                            () => setState(
+                              () {
+                            isSearch = !isSearch;
+                          },
+                        ),
+                      );
+                    } else {
+                      animationController.forward();
+                      Future.delayed(
+                        const Duration(milliseconds: 850),
+                            () => setState(
+                              () {
+                            isSearch = !isSearch;
+                          },
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.search),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: navigationTapped,
-        children: _bottomNavPages,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.chair), label: "Now Playing"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.upcoming), label: "Upcoming"),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Popular"),
-        ],
-        onTap: navigationTapped,
-        currentIndex: _page,
-      ),
+          body: PageView(
+            controller: _pageController,
+            onPageChanged: navigationTapped,
+            children: _bottomNavPages,
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            items: const [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.chair), label: "Now Playing"),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.upcoming), label: "Upcoming"),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.favorite), label: "Popular"),
+            ],
+            onTap: navigationTapped,
+            currentIndex: _page,
+          ),
+        );
+      },
     );
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    animationController.dispose();
+    super.dispose();
   }
 
   void navigationTapped(int page) {
@@ -73,117 +247,4 @@ class _MainPageState extends State<MainPage> {
       _page = page;
     });
   }
-
-// void _onItemTapped(int index) {
-//   _pageController.jumpToPage(index);
-//   setState(() {
-//     _page = index;
-//   });
-// }
-
 }
-
-// [
-// //Now Playing
-// Offstage(
-// offstage: _page != 0,
-// child: TickerMode(
-// enabled: _page == 0,
-// child: FutureBuilder(
-// future: getNowPlayingMovies(),
-// builder:
-// (BuildContext context, AsyncSnapshot<List> snapshot) {
-// if (!snapshot.hasData) {
-// return const Center(
-// child: CircularProgressIndicator(),
-// );
-// }
-// // Shows the real data with the data retrieved.
-// List movies = snapshot.data;
-// return CustomScrollView(
-// primary: false,
-// slivers: <Widget>[
-// SliverPadding(
-// padding: const EdgeInsets.all(10.0),
-// sliver: SliverGrid.count(
-// crossAxisSpacing: 10.0,
-// mainAxisSpacing: 10.0,
-// crossAxisCount: 2,
-// children:
-// createNowPlayingMovieCardItem(movies, context),
-// ),
-// ),
-// ],
-// );
-// }),
-// ),
-// ),
-// //Upcoming
-// Offstage(
-// offstage: _page != 1,
-// child: TickerMode(
-// enabled: _page == 1,
-// child: FutureBuilder(
-// future: getUpcomingMovies(),
-// builder:
-// (BuildContext context, AsyncSnapshot<List> snapshot) {
-// if (!snapshot.hasData) {
-// return const Center(
-// child: CircularProgressIndicator(),
-// );
-// }
-// // Shows the real data with the data retrieved.
-// List movies = snapshot.data;
-// return CustomScrollView(
-// primary: false,
-// slivers: <Widget>[
-// SliverPadding(
-// padding: const EdgeInsets.all(10.0),
-// sliver: SliverGrid.count(
-// crossAxisSpacing: 10.0,
-// mainAxisSpacing: 10.0,
-// crossAxisCount: 2,
-// children:
-// createUpcomingMovieCardItem(movies, context),
-// ),
-// ),
-// ],
-// );
-// }),
-// ),
-// ),
-// //Popular
-// Offstage(
-// offstage: _page != 2,
-// child: TickerMode(
-// enabled: _page == 2,
-// child: FutureBuilder(
-// future: getPopularMovies(),
-// builder:
-// (BuildContext context, AsyncSnapshot<List> snapshot) {
-// if (!snapshot.hasData) {
-// return const Center(
-// child: CircularProgressIndicator(),
-// );
-// }
-// // Shows the real data with the data retrieved.
-// List movies = snapshot.data;
-// return CustomScrollView(
-// primary: false,
-// slivers: <Widget>[
-// SliverPadding(
-// padding: const EdgeInsets.all(10.0),
-// sliver: SliverGrid.count(
-// crossAxisSpacing: 10.0,
-// mainAxisSpacing: 10.0,
-// crossAxisCount: 2,
-// children:
-// createPopularMovieCardItem(movies, context),
-// ),
-// ),
-// ],
-// );
-// }),
-// ),
-// ),
-// ],

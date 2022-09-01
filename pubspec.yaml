@@ -23,6 +23,11 @@ dependencies:
   local_hero: ^0.2.0
   youtube_player_flutter: ^8.1.0
   flutter_inappwebview: ^5.4.3+7
+  easy_localization: ^3.0.1
+  shared_preferences: ^2.0.15
+  animated_snack_bar: ^0.2.2
+  animated_icon_button: ^1.0.2
+  show_up_animation: ^2.0.0
 
   cupertino_icons: ^1.0.2
 
