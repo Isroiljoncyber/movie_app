@@ -2,12 +2,12 @@
 
 ### If you like it please hit the like button 👍🏻
 
-## Main technologies:
+# Main technologies:
 
-# Flutter Block ✅
-# Cache Image Network ✅
-# Hero ✅
-# Youtube player ✅
+## ✅ Flutter Block 
+## ✅ Cache Image Network 
+## ✅ Hero 
+## ✅ Youtube player 
 
 # Some shots from it:
 
