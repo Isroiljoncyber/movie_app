@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:movie_app/domain/cubits/popularMoviesCubit/popular_movies_cubit.dart';
@@ -66,8 +68,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       animation: heightAnima,
       builder: (context, child) {
         return Scaffold(
-          appBar: AppBar(
-            bottom: PreferredSize(
+          appBar: _CustomAppBar(
+            size: Size.fromHeight(heightAnima.value),
+            child: AppBar(
+              backgroundColor: Colors.blue.withOpacity(0.1),
+              bottom: PreferredSize(
                 preferredSize: Size.fromHeight(heightAnima.value),
                 child: Visibility(
                   visible: isSearch,
@@ -139,91 +144,100 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                )),
-            centerTitle: true,
-            title: const Text("Movie App"),
-            actions: [
-              PopupMenuButton<SortType>(
-                onSelected: (SortType sortType) {
-                  if (_page == 0) {
-                    context
-                        .read<NowPlayingMoviesCubit>()
-                        .sortNowPlayingMovies(sortType);
-                  } else if (_page == 1) {
-                    context
-                        .read<UpcomingMoviesCubit>()
-                        .sortUpcomingMovies(sortType);
-                  } else {
-                    context
-                        .read<PopularMoviesCubit>()
-                        .sortPopularMovies(sortType);
-                  }
-                },
-                itemBuilder: (BuildContext context) =>
-                    <PopupMenuEntry<SortType>>[
-                  const PopupMenuItem<SortType>(
-                    value: SortType.popularity,
-                    child: Text('By popularity'),
-                  ),
-                  const PopupMenuItem<SortType>(
-                    value: SortType.voteAverage,
-                    child: Text('By average vote'),
-                  ),
-                  const PopupMenuItem<SortType>(
-                    value: SortType.voteCount,
-                    child: Text('By vote count'),
-                  ),
-                ],
-                icon: const Icon(Icons.sort),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: IconButton(
-                  onPressed: () {
-                    if(isSearch){
-                      animationController.reverse();
-                      animationController.reverse();
-                      Future.delayed(
-                        const Duration(milliseconds: 150),
-                            () => setState(
-                              () {
-                            isSearch = !isSearch;
-                          },
-                        ),
-                      );
-                    } else {
-                      animationController.forward();
-                      Future.delayed(
-                        const Duration(milliseconds: 850),
-                            () => setState(
-                              () {
-                            isSearch = !isSearch;
-                          },
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.search),
                 ),
               ),
-            ],
+              centerTitle: true,
+              title: const Text("Movie App"),
+              actions: [
+                PopupMenuButton<SortType>(
+                  onSelected: (SortType sortType) {
+                    if (_page == 0) {
+                      context
+                          .read<NowPlayingMoviesCubit>()
+                          .sortNowPlayingMovies(sortType);
+                    } else if (_page == 1) {
+                      context
+                          .read<UpcomingMoviesCubit>()
+                          .sortUpcomingMovies(sortType);
+                    } else {
+                      context
+                          .read<PopularMoviesCubit>()
+                          .sortPopularMovies(sortType);
+                    }
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<SortType>>[
+                    const PopupMenuItem<SortType>(
+                      value: SortType.popularity,
+                      child: Text('By popularity'),
+                    ),
+                    const PopupMenuItem<SortType>(
+                      value: SortType.voteAverage,
+                      child: Text('By average vote'),
+                    ),
+                    const PopupMenuItem<SortType>(
+                      value: SortType.voteCount,
+                      child: Text('By vote count'),
+                    ),
+                  ],
+                  icon: const Icon(Icons.sort),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: IconButton(
+                    onPressed: () {
+                      if (isSearch) {
+                        animationController.reverse();
+                        animationController.reverse();
+                        Future.delayed(
+                          const Duration(milliseconds: 150),
+                          () => setState(
+                            () {
+                              isSearch = !isSearch;
+                            },
+                          ),
+                        );
+                      } else {
+                        animationController.forward();
+                        Future.delayed(
+                          const Duration(milliseconds: 850),
+                          () => setState(
+                            () {
+                              isSearch = !isSearch;
+                            },
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.search),
+                  ),
+                ),
+              ],
+            ),
           ),
           body: PageView(
             controller: _pageController,
             onPageChanged: navigationTapped,
             children: _bottomNavPages,
           ),
-          bottomNavigationBar: BottomNavigationBar(
-            items: const [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.chair), label: "Now Playing"),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.upcoming), label: "Upcoming"),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.favorite), label: "Popular"),
-            ],
-            onTap: navigationTapped,
-            currentIndex: _page,
+          bottomNavigationBar: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 60),
+              child: BottomNavigationBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                items: const [
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.chair), label: "Now Playing"),
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.upcoming), label: "Upcoming"),
+                  BottomNavigationBarItem(
+                      icon: Icon(Icons.favorite), label: "Popular"),
+                ],
+                onTap: navigationTapped,
+                currentIndex: _page,
+              ),
+            ),
           ),
         );
       },
@@ -247,4 +261,24 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       _page = page;
     });
   }
+}
+
+class _CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+  _CustomAppBar({required this.child, required this.size});
+
+  Widget child;
+  Size size;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 100),
+        child: child,
+      ),
+    );
+  }
+
+  @override
+  Size get preferredSize => Size.fromHeight(56+size.height);
 }
