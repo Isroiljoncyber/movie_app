@@ -2,7 +2,8 @@
 
 ### If you like it please hit the like button 👍🏻
 
-Used technologies:
+#### Main technologies:
+
 ## Flutter Block ✅
 ## Cache Image Network ✅
 ## Hero ✅
